@@ -11,7 +11,7 @@ const router = express.Router();
 router.get('/', [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50'),
-  query('category').optional().isIn(['electronics', 'clothing', 'books', 'home', 'sports', 'other']).withMessage('Invalid category')
+  query('category').optional().isIn(['mobile_covers', 'screen_protectors', 'chargers', 'cables', 'headphones', 'power_banks', 'smart_watches', 'other']).withMessage('Invalid category')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -33,8 +33,27 @@ router.get('/', [
       ];
     }
 
+    // Add price filters
+    if (req.query.minPrice || req.query.maxPrice) {
+      filter.price = {};
+      if (req.query.minPrice) filter.price.$gte = Number(req.query.minPrice);
+      if (req.query.maxPrice) filter.price.$lte = Number(req.query.maxPrice);
+    }
+
+    // Build sort object
+    let sortObj = { createdAt: -1 }; // Default
+    if (req.query.sortBy === 'price-low') {
+      sortObj = { price: 1 };
+    } else if (req.query.sortBy === 'price-high') {
+      sortObj = { price: -1 };
+    } else if (req.query.sortBy === 'name') {
+      sortObj = { name: 1 };
+    } else if (req.query.sortBy === 'rating') {
+      sortObj = { rating: -1 };
+    }
+
     const products = await Product.find(filter)
-      .sort({ createdAt: -1 })
+      .sort(sortObj)
       .skip(skip)
       .limit(limit);
 
@@ -87,7 +106,7 @@ router.post('/', protect, admin, [
   body('description').trim().notEmpty().withMessage('Product description is required'),
   body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
   body('image').notEmpty().withMessage('Product image is required'),
-  body('category').isIn(['electronics', 'clothing', 'books', 'home', 'sports', 'other']).withMessage('Invalid category'),
+  body('category').isIn(['mobile_covers', 'screen_protectors', 'chargers', 'cables', 'headphones', 'power_banks', 'smart_watches', 'other']).withMessage('Invalid category'),
   body('stock').isInt({ min: 0 }).withMessage('Stock must be a non-negative integer')
 ], async (req, res) => {
   try {
@@ -112,7 +131,7 @@ router.put('/:id', protect, admin, [
   body('description').optional().trim().notEmpty().withMessage('Product description cannot be empty'),
   body('price').optional().isFloat({ min: 0 }).withMessage('Price must be a positive number'),
   body('image').optional().notEmpty().withMessage('Product image cannot be empty'),
-  body('category').optional().isIn(['electronics', 'clothing', 'books', 'home', 'sports', 'other']).withMessage('Invalid category'),
+  body('category').optional().isIn(['mobile_covers', 'screen_protectors', 'chargers', 'cables', 'headphones', 'power_banks', 'smart_watches', 'other']).withMessage('Invalid category'),
   body('stock').optional().isInt({ min: 0 }).withMessage('Stock must be a non-negative integer')
 ], async (req, res) => {
   try {
@@ -143,14 +162,14 @@ router.put('/:id', protect, admin, [
 router.get('/by-ids', async (req, res) => {
   try {
     const { ids } = req.query;
-    
+
     if (!ids) {
       return res.status(400).json({ success: false, message: 'Product IDs are required' });
     }
 
     // Convert to array if single ID is passed
     const idArray = Array.isArray(ids) ? ids : ids.split(',');
-    
+
     // Validate IDs format (basic ObjectId validation)
     const invalidIds = idArray.filter(id => !/^[0-9a-fA-F]{24}$/.test(id));
     if (invalidIds.length > 0) {

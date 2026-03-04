@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   FiUser, FiShoppingCart, FiHeart, FiPackage,
-  FiEdit, FiEye, FiMessageSquare, FiStar, FiLogOut, FiSettings
+  FiEdit, FiEye, FiMessageSquare, FiStar, FiLogOut, FiSettings, FiDownload
 } from 'react-icons/fi';
 import { AiFillStar, AiOutlineStar } from 'react-icons/ai';
+import * as XLSX from 'xlsx';
 import { useAuth } from '../context/authContext';
 import { useCart } from '../context/cartContext';
 import { useWishlist } from '../context/wishlistContext';
@@ -138,6 +139,40 @@ const UserDashboard = () => {
     }
   };
 
+  const handleCancelOrder = async (orderId) => {
+    if (window.confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
+      try {
+        await api.updateOrderStatus(orderId, 'cancelled');
+        alert('Order cancelled successfully.');
+        loadUserData(); // Refresh data
+      } catch (error) {
+        console.error('Error cancelling order:', error);
+        alert(error.message || 'Failed to cancel order');
+      }
+    }
+  };
+
+  const handleGenerateReport = () => {
+    if (!orders || orders.length === 0) {
+      alert('No orders available to generate report.');
+      return;
+    }
+
+    const reportData = orders.map(o => ({
+      'Order ID': String(o.id || o._id).toUpperCase(),
+      'Date': new Date(o.date || o.createdAt).toLocaleDateString(),
+      'Items': o.items ? o.items.map(i => i.name).join(', ') : '',
+      'Total Amount': o.total,
+      'Status': o.status
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(reportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Orders Report');
+
+    XLSX.writeFile(workbook, `My_Orders_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   const openReviewModal = (product, orderId) => {
     setReviewModal({ product, orderId, isEditing: false });
     setReviewForm({ rating: 5, comment: '', isSubmitting: false });
@@ -246,10 +281,20 @@ const UserDashboard = () => {
 
         {activeTab === 'orders' && (
           <div className="dash-card">
+            <div style={{ padding: '1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ margin: 0 }}>My Orders</h2>
+              <button
+                onClick={handleGenerateReport}
+                className="dash-btn dash-btn-primary"
+                style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <FiDownload size={16} /> Download Report
+              </button>
+            </div>
             <div className="dash-table-container">
               <table className="dash-table">
                 <thead>
-                  <tr><th>Order Ref</th><th>Date</th><th>Purchased Items</th><th>Total</th><th>Status</th><th>View</th></tr>
+                  <tr><th>Order Ref</th><th>Date</th><th>Purchased Items</th><th>Total</th><th>Status</th><th>Options</th></tr>
                 </thead>
                 <tbody>
                   {orders.map(o => (
@@ -265,7 +310,22 @@ const UserDashboard = () => {
                       </td>
                       <td style={{ fontWeight: 700 }}>{formatPrice(o.total)}</td>
                       <td><span className={`dash-badge badge-${o.status.toLowerCase()}`}>{o.status}</span></td>
-                      <td><button className="dash-btn dash-btn-outline" style={{ padding: '6px' }} title="View Order Details"><FiEye /></button></td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          {o.status === 'delivered' && (
+                            <button
+                              onClick={() => {
+                                setActiveTab('reviews');
+                              }}
+                              className="dash-btn"
+                              style={{ padding: '6px 12px', background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', fontSize: '0.75rem' }}
+                              title="Write Review"
+                            >
+                              Review
+                            </button>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

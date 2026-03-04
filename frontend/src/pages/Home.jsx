@@ -42,7 +42,7 @@ const Home = () => {
     {
       name: 'Phone Cases',
       image: 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=600&q=80',
-      link: '/products?category=cases'
+      link: '/products?category=mobile_covers'
     },
     {
       name: 'Chargers & Cables',
@@ -52,12 +52,12 @@ const Home = () => {
     {
       name: 'Audio Accessories',
       image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=600&q=80',
-      link: '/products?category=audio'
+      link: '/products?category=headphones'
     },
     {
       name: 'Screen Protectors',
       image: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=600&q=80',
-      link: '/products?category=screen-protectors'
+      link: '/products?category=screen_protectors'
     }
   ];
 
@@ -72,7 +72,7 @@ const Home = () => {
             badge: 'New Arrivals',
             title: 'Premium Phone Cases & Covers',
             subtitle: 'Protect your device in style with our latest collection of durable and stylish cases.',
-            primaryCta: { href: '/products?category=cases', label: 'Shop Cases' },
+            primaryCta: { href: '/products?category=mobile_covers', label: 'Shop Cases' },
             secondaryCta: { href: '/products?sortBy=rating', label: 'Best Sellers' },
           },
           {
@@ -90,7 +90,7 @@ const Home = () => {
             badge: 'Premium Audio',
             title: 'Wireless Earbuds & Headphones',
             subtitle: 'Experience crystal-clear sound with our premium audio accessories.',
-            primaryCta: { href: '/products?category=audio', label: 'Shop Audio' },
+            primaryCta: { href: '/products?category=headphones', label: 'Shop Audio' },
             secondaryCta: { href: '/products?sortBy=rating', label: 'Top Rated' },
           },
         ]}

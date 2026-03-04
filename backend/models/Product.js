@@ -24,7 +24,7 @@ const productSchema = new mongoose.Schema({
   category: {
     type: String,
     required: [true, 'Product category is required'],
-    enum: ['electronics', 'clothing', 'books', 'home', 'sports', 'other']
+    enum: ['mobile_covers', 'screen_protectors', 'chargers', 'cables', 'headphones', 'power_banks', 'smart_watches', 'other']
   },
   stock: {
     type: Number,

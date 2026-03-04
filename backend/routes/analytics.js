@@ -13,17 +13,19 @@ router.get('/', protect, admin, async (req, res) => {
     console.log('📊 Analytics endpoint hit');
     console.log('🔐 User making request:', req.user);
     console.log('👑 User role:', req.user?.role);
-    
+
     const totalProducts = await Product.countDocuments();
     const totalOrders = await Order.countDocuments();
     const totalUsers = await User.countDocuments();
-    
+
     const totalRevenue = await Order.aggregate([
+      { $match: { status: { $ne: 'cancelled' } } },
       { $group: { _id: null, total: { $sum: '$total' } } }
     ]);
-    
+
     // Sales by month (current year)
     const byMonthAgg = await Order.aggregate([
+      { $match: { status: { $ne: 'cancelled' } } },
       {
         $group: {
           _id: { y: { $year: '$createdAt' }, m: { $month: '$createdAt' } },
@@ -33,7 +35,7 @@ router.get('/', protect, admin, async (req, res) => {
       },
       { $sort: { '_id.y': 1, '_id.m': 1 } }
     ]);
-    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const currentYear = new Date().getFullYear();
     let salesByMonth = byMonthAgg
       .filter(x => x._id.y === currentYear)
@@ -54,15 +56,42 @@ router.get('/', protect, admin, async (req, res) => {
     } else {
       // Optional simple MoM growth (based on sales)
       for (let i = 1; i < salesByMonth.length; i++) {
-        const prev = salesByMonth[i-1].sales || 0;
+        const prev = salesByMonth[i - 1].sales || 0;
         const curr = salesByMonth[i].sales || 0;
         salesByMonth[i].growth = prev > 0 ? Number((((curr - prev) / prev) * 100).toFixed(2)) : 0;
       }
       if (salesByMonth.length > 0 && salesByMonth[0].growth === undefined) salesByMonth[0].growth = 0;
     }
 
+    // Sales by year
+    const byYearAgg = await Order.aggregate([
+      { $match: { status: { $ne: 'cancelled' } } },
+      {
+        $group: {
+          _id: { $year: '$createdAt' },
+          sales: { $sum: '$total' },
+          orders: { $sum: 1 }
+        }
+      },
+      { $sort: { '_id': 1 } }
+    ]);
+    let salesByYear = byYearAgg.map(x => ({
+      year: x._id ? x._id.toString() : new Date().getFullYear().toString(),
+      sales: Number(x.sales || 0),
+      orders: Number(x.orders || 0)
+    }));
+    if (salesByYear.length === 0) {
+      const y = new Date().getFullYear();
+      salesByYear = [
+        { year: (y - 2).toString(), sales: 12500, orders: 45 },
+        { year: (y - 1).toString(), sales: 18400, orders: 65 },
+        { year: y.toString(), sales: 24000, orders: 85 }
+      ];
+    }
+
     // Sales by category
     const byCategoryAgg = await Order.aggregate([
+      { $match: { status: { $ne: 'cancelled' } } },
       { $unwind: '$products' },
       { $lookup: { from: 'products', localField: 'products.product', foreignField: '_id', as: 'prod' } },
       { $unwind: { path: '$prod', preserveNullAndEmptyArrays: true } },
@@ -147,12 +176,36 @@ router.get('/', protect, admin, async (req, res) => {
         paymentMethod: 'Credit Card' // Default value
       }));
     }
-    
-    let topProducts = await Product.find()
-      .sort({ rating: -1 })
-      .limit(5);
 
-    // If no products, add mock data
+    // Get top products by volume sold
+    const topProductsAgg = await Order.aggregate([
+      { $match: { status: { $ne: 'cancelled' } } },
+      { $unwind: '$products' },
+      {
+        $group: {
+          _id: '$products.product',
+          name: { $first: '$products.name' },
+          image: { $first: '$products.image' },
+          price: { $first: '$products.price' },
+          totalSales: { $sum: '$products.quantity' }
+        }
+      },
+      { $sort: { totalSales: -1 } },
+      { $limit: 6 }
+    ]);
+
+    let topProducts = [];
+    if (topProductsAgg.length > 0) {
+      topProducts = topProductsAgg.map(agg => ({
+        _id: agg._id,
+        name: agg.name || 'Unknown Product',
+        price: agg.price || 0,
+        image: agg.image || '',
+        totalSales: agg.totalSales
+      }));
+    }
+
+    // If no real top products orders, provide mock fallback
     if (topProducts.length === 0) {
       topProducts = [
         {
@@ -263,6 +316,7 @@ router.get('/', protect, admin, async (req, res) => {
       totalUsers,
       totalRevenue: totalRevenue[0]?.total || 0,
       salesByMonth,
+      salesByYear,
       salesByCategory,
       recentOrders: recentOrdersData,
       topProducts: topProducts.map(product => ({
@@ -271,7 +325,7 @@ router.get('/', protect, admin, async (req, res) => {
         price: product.price,
         image: product.image,
         rating: product.rating || 0,
-        totalSales: product.numReviews || 0,
+        totalSales: product.totalSales || 0,
         stock: product.stock || 0,
         category: product.category || 'other'
       })),
@@ -286,17 +340,17 @@ router.get('/', protect, admin, async (req, res) => {
     };
 
     console.log('📊 Sending analytics data:', analyticsData);
-    
+
     res.json({
       success: true,
       data: analyticsData
     });
   } catch (error) {
     console.error('❌ Analytics error:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Error fetching analytics',
-      error: error.message 
+      error: error.message
     });
   }
 });

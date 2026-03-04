@@ -83,9 +83,8 @@ const ProductCard = ({ product, showActions = true }) => {
   // Get category name
   const getCategoryName = () => {
     if (!product.category) return '';
-    return typeof product.category === 'string'
-      ? product.category
-      : product.category.name || '';
+    const cat = typeof product.category === 'string' ? product.category : product.category.name || '';
+    return cat.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
 
   const categoryName = getCategoryName();

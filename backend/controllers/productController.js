@@ -12,7 +12,40 @@ const createProduct = async (req, res) => {
 
 const getProducts = async (req, res) => {
   try {
-    const products = await Product.find();
+    const { category, minPrice, maxPrice, sortBy, search } = req.query;
+
+    // Build query
+    let query = {};
+
+    if (category && category !== 'all') {
+      query.category = category;
+    }
+
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
+    }
+
+    if (search) {
+      query.name = { $regex: search, $options: 'i' };
+    }
+
+    // Build sort
+    let sortObj = {};
+    if (sortBy === 'price-low') {
+      sortObj.price = 1;
+    } else if (sortBy === 'price-high') {
+      sortObj.price = -1;
+    } else if (sortBy === 'name') {
+      sortObj.name = 1;
+    } else if (sortBy === 'rating') {
+      sortObj.rating = -1;
+    } else {
+      sortObj.createdAt = -1; // Default
+    }
+
+    const products = await Product.find(query).sort(sortObj);
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -23,14 +56,14 @@ const getProducts = async (req, res) => {
 const getProductsByIds = async (req, res) => {
   try {
     const { ids } = req.query;
-    
+
     if (!ids) {
       return res.status(400).json({ message: 'Product IDs are required' });
     }
 
     // Convert to array if single ID is passed
     const idArray = Array.isArray(ids) ? ids : ids.split(',');
-    
+
     // Validate IDs format (basic ObjectId validation)
     const invalidIds = idArray.filter(id => !/^[0-9a-fA-F]{24}$/.test(id));
     if (invalidIds.length > 0) {

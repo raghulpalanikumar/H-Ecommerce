@@ -137,7 +137,7 @@ const ProductManagement = () => {
     product.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const categories = ['electronics', 'clothing', 'books', 'home', 'sports', 'other'];
+  const categories = ['mobile_covers', 'screen_protectors', 'chargers', 'cables', 'headphones', 'power_banks', 'smart_watches', 'other'];
 
   return (
     <div className="admin-products-page">

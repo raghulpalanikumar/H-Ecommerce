@@ -1,0 +1,8 @@
+Starting seed at 2026-02-19T10:20:28.097Z
+Loading .env from: D:\Hemalekha\ecommerce\backend\.env
+Using MONGODB_URI: mongodb+srv://tharan...
+Connecting to mongoose...
+✅ Connected to MongoDB
+🗑️  Cleared existing products
+✨ Added 17 new mobile accessory products
+✅ Seeding complete!

@@ -84,7 +84,7 @@ const ProductListing = () => {
       }}>
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ margin: '0 0 0.5rem 0', fontSize: '2rem', fontWeight: '700', color: 'white' }}>Products</h1>
+            <h1 style={{ margin: '0 0 0.5rem 0', fontSize: '2rem', fontWeight: '700', color: 'white' }}>Mobile Accessories</h1>
             <p style={{ margin: 0, opacity: 0.9, fontSize: '1rem' }}>
               {loading ? 'Loading...' : `${products.length} products found`}
             </p>
@@ -184,12 +184,15 @@ const ProductListing = () => {
                 value={filters.category}
                 onChange={(e) => handleFilterChange('category', e.target.value)}
               >
-                <option value="all">All Categories</option>
-                <option value="electronics">Electronics</option>
-                <option value="clothing">Clothing</option>
-                <option value="home">Home & Garden</option>
-                <option value="sports">Sports</option>
-                <option value="fashion">Fashion</option>
+                <option value="all">All Accessories</option>
+                <option value="mobile_covers">Mobile Covers</option>
+                <option value="screen_protectors">Screen Protectors</option>
+                <option value="chargers">Chargers</option>
+                <option value="cables">Cables</option>
+                <option value="headphones">Headphones</option>
+                <option value="power_banks">Power Banks</option>
+                <option value="smart_watches">Smart Watches</option>
+                <option value="other">Other</option>
               </select>
             </div>
 

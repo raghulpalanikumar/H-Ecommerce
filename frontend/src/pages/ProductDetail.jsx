@@ -105,7 +105,7 @@ const ProductDetail = () => {
         <nav className="product-path">
           <Link to="/">Home</Link> <FiChevronRight size={12} />
           <Link to="/products">Catalog</Link> <FiChevronRight size={12} />
-          <span style={{ color: '#0f172a', fontWeight: 600 }}>{product.category}</span>
+          <span style={{ color: '#0f172a', fontWeight: 600 }}>{product.category.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</span>
         </nav>
 
         <div className="product-layout">
@@ -117,7 +117,7 @@ const ProductDetail = () => {
           {/* Right: Product Intel */}
           <div className="product-intel">
             <div>
-              <span className="product-category-badge">{product.category}</span>
+              <span className="product-category-badge">{product.category.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</span>
               <h1 className="product-main-title">{product.name}</h1>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '12px' }}>
                 <StockBadge stock={product.stock} />

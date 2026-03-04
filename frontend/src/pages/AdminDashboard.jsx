@@ -96,7 +96,9 @@ const AdminDashboard = () => {
   if (!analytics) return <div className="text-center p-4">Error loading data.</div>;
 
   const salesByMonth = analytics.salesByMonth || [];
+  const salesByYear = analytics.salesByYear || [];
   const salesByCategory = analytics.salesByCategory || [];
+  const topProducts = analytics.topProducts || [];
 
   return (
     <div className="admin-dashboard">
@@ -167,79 +169,97 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Data Visualization Row */}
+      {/* Data Visualization Row 1 */}
       <div className="grid grid-2" style={{ gap: '2rem', marginBottom: '2.5rem' }}>
         <div className="admin-card">
           <div className="admin-card-header">
-            <h2>Revenue Analysis</h2>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                onClick={() => setChartType('line')}
-                className={`btn btn-sm ${chartType === 'line' ? 'btn-primary' : 'btn-secondary'}`}
-              >Trend</button>
-              <button
-                onClick={() => setChartType('bar')}
-                className={`btn btn-sm ${chartType === 'bar' ? 'btn-primary' : 'btn-secondary'}`}
-              >Volume</button>
-            </div>
+            <h2>Monthly Sales Performance</h2>
           </div>
           <div className="admin-card-body">
             <div style={{ height: '320px' }}>
-              {chartType === 'line' ? (
-                <Line
-                  data={{
-                    labels: salesByMonth.map(item => item.month),
-                    datasets: [{
-                      label: 'Revenue (₹)',
-                      data: salesByMonth.map(item => item.sales),
-                      borderColor: '#0066cc',
-                      backgroundColor: 'rgba(0, 102, 204, 0.05)',
-                      tension: 0.4,
-                      fill: true,
-                      pointBackgroundColor: '#fff',
-                      pointBorderWidth: 2
-                    }]
-                  }}
-                  options={{ responsive: true, maintainAspectRatio: false }}
-                />
-              ) : (
-                <Bar
-                  data={{
-                    labels: salesByMonth.map(item => item.month),
-                    datasets: [{
-                      label: 'Orders Count',
-                      data: salesByMonth.map(item => item.orders),
-                      backgroundColor: 'rgba(56, 189, 248, 0.8)',
-                      borderRadius: 6
-                    }]
-                  }}
-                  options={{ responsive: true, maintainAspectRatio: false }}
-                />
-              )}
+              <Bar
+                data={{
+                  labels: salesByMonth.map(item => item.month),
+                  datasets: [{
+                    label: 'Revenue (₹)',
+                    data: salesByMonth.map(item => item.sales),
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderRadius: 6
+                  }]
+                }}
+                options={{ responsive: true, maintainAspectRatio: false }}
+              />
             </div>
           </div>
         </div>
 
         <div className="admin-card">
           <div className="admin-card-header">
-            <h2>Sector Performance</h2>
+            <h2>Yearly Progressive Sales</h2>
           </div>
           <div className="admin-card-body">
             <div style={{ height: '320px' }}>
-              <Pie
+              <Bar
                 data={{
-                  labels: salesByCategory.map(item => item.name),
+                  labels: salesByYear.map(item => item.year),
                   datasets: [{
-                    data: salesByCategory.map(item => item.value),
-                    backgroundColor: ['#0ea5e9', '#10b981', '#f59e0b', '#f43f5e', '#6366f1'],
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
+                    label: 'Revenue (₹)',
+                    data: salesByYear.map(item => item.sales),
+                    backgroundColor: '#10b981',
+                    borderRadius: 6
+                  }]
+                }}
+                options={{ responsive: true, maintainAspectRatio: false }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Analytics Data Visualization Row 2 */}
+      <div className="grid grid-2" style={{ gap: '2rem', marginBottom: '2.5rem' }}>
+        <div className="admin-card">
+          <div className="admin-card-header">
+            <h2>Category Sales Velocity</h2>
+          </div>
+          <div className="admin-card-body">
+            <div style={{ height: '320px' }}>
+              <Bar
+                data={{
+                  labels: salesByCategory.map(item => item.name.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')),
+                  datasets: [{
+                    label: 'Total Revenue (₹)',
+                    data: salesByCategory.map(item => item.sales),
+                    backgroundColor: '#8b5cf6',
+                    borderRadius: 6
+                  }]
+                }}
+                options={{ responsive: true, maintainAspectRatio: false }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="admin-card">
+          <div className="admin-card-header">
+            <h2>Top Acquired Products (Volume)</h2>
+          </div>
+          <div className="admin-card-body">
+            <div style={{ height: '320px' }}>
+              <Bar
+                data={{
+                  labels: topProducts.map(item => item.name.length > 15 ? item.name.substring(0, 15) + '...' : item.name),
+                  datasets: [{
+                    label: 'Units Sold',
+                    data: topProducts.map(item => item.totalSales),
+                    backgroundColor: '#ec4899',
+                    borderRadius: 6
                   }]
                 }}
                 options={{
                   responsive: true,
                   maintainAspectRatio: false,
-                  plugins: { legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } } }
+                  scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
                 }}
               />
             </div>
@@ -286,27 +306,30 @@ const AdminDashboard = () => {
 
         <div className="admin-card">
           <div className="admin-card-header">
-            <h2>Hottest Products</h2>
-            <Link to="/admin/products" className="admin-link">Inventory Control</Link>
+            <h2>Category Sales Breakdown</h2>
           </div>
           <div className="admin-card-body">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {analytics.topProducts.slice(0, 5).map((product, idx) => (
-                <div key={product.id} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', paddingBottom: '1.25rem', borderBottom: idx === 4 ? 'none' : '1px solid #f1f5f9' }}>
-                  <div style={{ width: '44px', height: '44px', borderRadius: '10px', overflow: 'hidden', background: '#f8fafc' }}>
-                    <img
-                      src={constructImageUrl(product.image)}
-                      alt=""
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={(e) => { e.target.src = createFallbackImage(); }}
-                    />
+              {analytics.salesByCategory.slice(0, 5).map((cat, idx) => (
+                <div key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingBottom: '1.25rem', borderBottom: idx === 4 ? 'none' : '1px solid #f1f5f9' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                    {cat.name.charAt(0).toUpperCase()}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.9375rem', fontWeight: '600', color: '#1e293b' }}>{product.name}</h4>
-                    <p style={{ margin: 0, fontSize: '0.8125rem', color: '#64748b' }}>{formatPrice(product.price)} • {product.totalSales} units sold</p>
+                    <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.95rem', fontWeight: '700', color: '#1e293b' }}>
+                      {cat.name.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '0.8125rem', color: '#64748b' }}>
+                      {cat.orders} Orders processed
+                    </p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: '700', color: '#0066cc', fontSize: '0.9375rem' }}>⭐ {product.rating}</div>
+                    <div style={{ fontWeight: '800', color: '#0f172a', fontSize: '1rem' }}>
+                      {formatPrice(cat.sales)}
+                    </div>
+                    <div style={{ fontWeight: '600', color: '#10b981', fontSize: '0.8rem' }}>
+                      {cat.percentage}% of total
+                    </div>
                   </div>
                 </div>
               ))}
